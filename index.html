@@ -129,15 +129,24 @@
   }
   .podium{
     display:flex;
+    flex-direction:column;
+    gap:14px;
+    margin-bottom:14px;
+  }
+  .podium-row{
+    display:flex;
     gap:10px;
     align-items:flex-end;
-    margin-bottom:14px;
-    overflow-x:auto;
-    padding-bottom:6px;
+  }
+  .podium-row.top-row{
+    padding-top:22px; /* room for rank-1's lift + medal so nothing is clipped */
+  }
+  .podium-row.bottom-row .podium-card{
+    flex:1 1 0;
   }
   .podium-card{
     flex:1 1 0;
-    min-width:88px;
+    min-width:0;
     background:var(--paper);
     border:2px solid var(--line);
     border-radius:14px;
@@ -147,17 +156,29 @@
     transition:transform .25s ease, box-shadow .25s ease, border-color .25s ease;
   }
   .podium-card.rank-1{
+    flex:1.25 1 0;
     order:2;
     border-color:var(--gold);
     background:linear-gradient(180deg,#FFF8E1 0%, var(--paper) 70%);
-    box-shadow:0 10px 24px rgba(212,175,55,.28);
+    box-shadow:0 0 0 1px rgba(212,175,55,.35), 0 10px 26px rgba(212,175,55,.35), 0 0 22px rgba(212,175,55,.30);
     padding-top:20px;
     transform:translateY(-10px);
   }
-  .podium-card.rank-2{order:1; transform:translateY(0);}
-  .podium-card.rank-3{order:3; transform:translateY(4px);}
-  .podium-card.rank-4{order:4;}
-  .podium-card.rank-5{order:5;}
+  .podium-card.rank-2{
+    order:1;
+    transform:translateY(0);
+    border-color:#C0C0C0;
+    box-shadow:0 0 0 1px rgba(192,192,192,.4), 0 6px 18px rgba(160,160,160,.30), 0 0 14px rgba(192,192,192,.25);
+  }
+  .podium-card.rank-3{
+    order:3;
+    transform:translateY(4px);
+    border-color:#CD7F32;
+    box-shadow:0 0 0 1px rgba(205,127,50,.35), 0 6px 18px rgba(205,127,50,.25), 0 0 14px rgba(205,127,50,.22);
+  }
+  .podium-card.rank-4, .podium-card.rank-5{
+    padding:12px 10px;
+  }
 
   .podium-medal{
     position:absolute;
@@ -171,9 +192,9 @@
     color:#fff;
     box-shadow:0 4px 10px rgba(0,0,0,.2);
   }
-  .rank-1 .podium-medal{background:linear-gradient(145deg,#FFD75A,#C99A1D); width:34px;height:34px; font-size:15px; top:-15px;}
-  .rank-2 .podium-medal{background:linear-gradient(145deg,#E2E2E2,#A8A8A8);}
-  .rank-3 .podium-medal{background:linear-gradient(145deg,#E3A064,#A9683A);}
+  .rank-1 .podium-medal{background:linear-gradient(145deg,#FFD75A,#C99A1D); width:34px;height:34px; font-size:15px; top:-15px; box-shadow:0 4px 10px rgba(0,0,0,.2), 0 0 10px rgba(212,175,55,.6);}
+  .rank-2 .podium-medal{background:linear-gradient(145deg,#E2E2E2,#A8A8A8); box-shadow:0 4px 10px rgba(0,0,0,.2), 0 0 8px rgba(192,192,192,.6);}
+  .rank-3 .podium-medal{background:linear-gradient(145deg,#E3A064,#A9683A); box-shadow:0 4px 10px rgba(0,0,0,.2), 0 0 8px rgba(205,127,50,.55);}
   .rank-4 .podium-medal,.rank-5 .podium-medal{background:var(--ink-soft);}
 
   .podium-flag{font-size:30px; line-height:1; margin-bottom:6px; display:block;}
@@ -337,7 +358,6 @@
 
   @media (min-width:560px){
     .flag-grid{grid-template-columns:repeat(2,1fr);}
-    .podium-card{min-width:100px;}
   }
 
   @media (prefers-reduced-motion: reduce){
@@ -642,7 +662,8 @@ function render(){
     empty.style.display = "block";
   }else{
     empty.style.display = "none";
-    podium.innerHTML = ranked.map((t,i)=>{
+
+    const cardHTML = (t,i)=>{
       const pct = total>0 ? Math.round((t.count/total)*100) : 0;
       return `
         <div class="podium-card rank-${i+1}">
@@ -653,7 +674,15 @@ function render(){
           <div class="podium-votes">${t.count.toLocaleString()} vote${t.count===1?"":"s"}</div>
         </div>
       `;
-    }).join("");
+    };
+
+    const topThree = ranked.slice(0,3).map((t,i)=>cardHTML(t,i)).join("");
+    const restTwo = ranked.slice(3,5).map((t,i)=>cardHTML(t,i+3)).join("");
+
+    podium.innerHTML = `
+      <div class="podium-row top-row">${topThree}</div>
+      ${restTwo ? `<div class="podium-row bottom-row">${restTwo}</div>` : ""}
+    `;
   }
 }
 
